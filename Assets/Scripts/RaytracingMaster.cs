@@ -13,7 +13,7 @@ public class RaytracingMaster : MonoBehaviour
     public Vector2 SphereRadius = new Vector2(3.0f, 8.0f);
     public uint SpheresMax = 100;
     public float SpherePlacementRadius = 100.0f;
-
+    
     private Camera _camera;
     private float _lastFieldOfView;
     private RenderTexture _target;
@@ -29,6 +29,8 @@ public class RaytracingMaster : MonoBehaviour
         public float radius;
         public Vector3 albedo;
         public Vector3 specular;
+        public float smoothness;
+        public Vector3 emission;
     }
 
     private void Awake()
@@ -100,9 +102,19 @@ public class RaytracingMaster : MonoBehaviour
 
             // Albedo and specular color
             Color color = Random.ColorHSV();
-            bool metal = Random.value < 0.0f;
-            sphere.albedo = metal ? Vector4.zero : new Vector4(color.r, color.g, color.b);
-            sphere.specular = metal ? new Vector4(color.r, color.g, color.b) : new Vector4(0.04f, 0.04f, 0.04f);
+            float chance = Random.value;
+            if (chance < 0.8f)
+            {
+                bool metal = Random.value < 0.4f;
+                sphere.albedo = metal ? Vector4.zero : new Vector4(color.r, color.g, color.b);
+                sphere.specular = metal ? new Vector4(color.r, color.g, color.b) : new Vector4(0.04f, 0.04f, 0.04f);
+                sphere.smoothness = Random.value;
+            }
+            else
+            {
+                Color emission = Random.ColorHSV(0, 1, 0, 1, 3.0f, 8.0f);
+                sphere.emission = new Vector3(emission.r, emission.g, emission.b);
+            }
 
             // Add the sphere to the list
             spheres.Add(sphere);
@@ -116,7 +128,7 @@ public class RaytracingMaster : MonoBehaviour
             _sphereBuffer.Release();
         if (spheres.Count > 0)
         {
-            _sphereBuffer = new ComputeBuffer(spheres.Count, 40);
+            _sphereBuffer = new ComputeBuffer(spheres.Count, 56);
             _sphereBuffer.SetData(spheres);
         }
     }
